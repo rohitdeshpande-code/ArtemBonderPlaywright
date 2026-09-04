@@ -154,4 +154,91 @@ test.describe('Form layout page', () =>{
         }
 
     })
+
+    test('date picker', async({page}) => {
+
+        await page.getByRole('link', {name: 'Forms'}).click()
+        await page.getByRole('link', {name: 'Datepicker'}).click()
+
+        const calendarInputField = page.getByPlaceholder("Form Picker")
+        await calendarInputField.click()
+
+        const date = new Date()
+        date.setDate(date.getDate()+10)
+        const expectedDay = date.getDate().toString()
+        const expectedMonth = date.toLocaleDateString('en-Us',{month:'short'})
+        const expectedMonthLong = date.toLocaleDateString('en-Us', {month: 'long'})
+        const expectedYear = date.getFullYear().toString()
+        const expectedDate = `${expectedMonth} ${expectedDay}, ${expectedYear}`
+
+    
+        let currentMonthAndYear = await page.locator("nb-calendar-view-mode").textContent()
+        let expectedMonthAndYear = `${expectedMonthLong} ${expectedYear}`
+        if(!currentMonthAndYear?.includes(expectedMonthAndYear)) {
+            await page.locator(".next-month").click()
+            currentMonthAndYear = await page.locator("nb-calendar-view-mode").textContent()
+        }
+
+
+
+        await page.locator(".day-cell:not(.bounding-month)").getByText(expectedDay, {exact: true}).click()
+        await expect(calendarInputField).toHaveValue(expectedDate)
+
+    })
+
+    test('sliders', async({page}) => {
+
+        //1 setting the attribute vales 
+        // const tempGauge = page.locator('[tabtitle="Temperature"] ngx-temperature-dragger circle')
+        // await tempGauge.evaluate( element => {
+        //     element.setAttribute("cy", "232.630")
+        //     element.setAttribute("cy", "232.630")
+        // })
+
+        // await tempGauge.click()
+
+        //2 Mouse movement 
+        const tempBox = page.locator('[tabtitle="Temperature"] ngx-temperature-dragger')
+        await tempBox.scrollIntoViewIfNeeded()
+
+        const box = await tempBox.boundingBox()
+        const x = box?.x + box?.width / 2
+        const y = box?.x + box?.height / 2
+
+        await page.mouse.move(x,y)
+        await page.mouse.down()
+        await page.mouse.move(x+100, y)
+        await page.mouse.move(x+100, y+100)
+        await page.mouse.up()
+
+        await expect(tempBox).toContainText("30")
+
+    })
+
+    test('iFrames', async({page}) => {
+
+        await page.getByRole('link', {name: 'Modal & Overlays'}).click()
+        await page.getByRole('link', {name: 'Dialog'}).click()
+
+        const iframe =page.frameLocator('[data-cy="esc-close-iframe"]')
+        await iframe.getByRole("button", {name: "Open Dialog with esc close"}).click()
+
+    })
+
+    test('Drag and drop', async({page}) => {
+
+        await page.getByRole('link', {name: 'Extra Components'}).click()
+        await page.getByRole('link', {name: 'Drag & Drop'}).click()
+
+        //1
+        await page.getByText("Get groceries").dragTo(page.locator("#drop-list"))
+
+        //2 
+        await page.getByText("Feed the dog").hover()
+        await page.mouse.down()
+        await page.locator("#drop-list").hover()
+        await page.mouse.up()
+
+        
+    })
 })
